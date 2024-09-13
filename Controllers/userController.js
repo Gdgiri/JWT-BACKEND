@@ -5,9 +5,21 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 export const registerUser = async (req, res) => {
   try {
-    const { username, email, password,role } = req.body;
+    const { username, email, password, role } = req.body;
+
+    // Check if user with the same email already exists
+    const existingUser = await user.findOne({ email });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ message: "Email already exists, registration failed" });
+    }
+
+    // Hash the password
     const hashPassword = await bcrypt.hash(password, 10);
-    const newUser = new user({ username, email, password: hashPassword,role });
+
+    // Create new user
+    const newUser = new user({ username, email, password: hashPassword, role });
     await newUser.save();
 
     res
@@ -15,9 +27,9 @@ export const registerUser = async (req, res) => {
       .json({ message: "User Registered Successfully", result: newUser });
   } catch (error) {
     console.log(error);
-    res
-      .status(500)
-      .json({ message: "Registration failed Internal server error or already mail exsist" });
+    res.status(500).json({
+      message: "Registration failed due to an internal server error",
+    });
   }
 };
 
